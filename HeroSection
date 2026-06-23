@@ -1,0 +1,102 @@
+import { Play, Plus, Info } from "lucide-react";
+import { Button } from "@/components/ui/button";
+
+interface HeroSectionProps {
+  title: string;
+  description: string;
+  backgroundImage: string;
+  rating?: string;
+  genre?: string;
+  onPlay?: () => void;
+  onAddToList?: () => void;
+  onMoreInfo?: () => void;
+}
+
+/**
+ * HeroSection Component
+ * Large featured video section with metadata and CTAs.
+ * Cinematic Dark Elegance: Gradient overlay for text readability, prominent play button.
+ */
+export default function HeroSection({
+  title,
+  description,
+  backgroundImage,
+  rating,
+  genre,
+  onPlay,
+  onAddToList,
+  onMoreInfo,
+}: HeroSectionProps) {
+  return (
+    <div className="relative w-full h-screen max-h-[600px] overflow-hidden rounded-lg">
+      {/* Background Image */}
+      <img
+        src={backgroundImage}
+        alt={title}
+        className="absolute inset-0 w-full h-full object-cover"
+      />
+
+      {/* Dark Gradient Overlay for Text Readability */}
+      <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/40 to-transparent" />
+
+      {/* Content */}
+      <div className="absolute inset-0 flex flex-col justify-end p-6 sm:p-8 lg:p-12">
+        <div className="max-w-2xl space-y-4">
+          {/* Title */}
+          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white leading-tight">
+            {title}
+          </h1>
+
+          {/* Metadata */}
+          <div className="flex items-center gap-4 text-sm sm:text-base">
+            {rating && (
+              <div className="flex items-center gap-2">
+                <span className="text-primary font-bold">★★★★☆</span>
+                <span className="text-gray-300">{rating}</span>
+              </div>
+            )}
+            {genre && (
+              <span className="px-3 py-1 bg-primary/20 text-primary rounded-full text-xs sm:text-sm font-medium">
+                {genre}
+              </span>
+            )}
+          </div>
+
+          {/* Description */}
+          <p className="text-gray-200 text-sm sm:text-base line-clamp-3 max-w-xl">
+            {description}
+          </p>
+
+          {/* Action Buttons */}
+          <div className="flex flex-wrap gap-3 pt-4">
+            <Button
+              onClick={onPlay}
+              className="bg-primary hover:bg-primary/90 text-white font-bold px-8 py-3 rounded-lg flex items-center gap-2 transition-all duration-200 transform hover:scale-105"
+            >
+              <Play className="w-5 h-5 fill-current" />
+              Play Now
+            </Button>
+
+            <Button
+              onClick={onAddToList}
+              variant="outline"
+              className="border-white/30 text-white hover:bg-white/10 font-bold px-6 py-3 rounded-lg flex items-center gap-2 transition-all duration-200"
+            >
+              <Plus className="w-5 h-5" />
+              Add to List
+            </Button>
+
+            <Button
+              onClick={onMoreInfo}
+              variant="outline"
+              className="border-white/30 text-white hover:bg-white/10 font-bold px-6 py-3 rounded-lg flex items-center gap-2 transition-all duration-200"
+            >
+              <Info className="w-5 h-5" />
+              More Info
+            </Button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

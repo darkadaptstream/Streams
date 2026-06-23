@@ -1,0 +1,167 @@
+import { useState } from "react";
+import Navbar from "@/components/Navbar";
+import HeroSection from "@/components/HeroSection";
+import VideoCarousel from "@/components/VideoCarousel";
+import VideoPlayer from "@/components/VideoPlayer";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+
+/**
+ * Home Page
+ * Main streaming platform interface with hero section, video carousels, and player.
+ * Cinematic Dark Elegance: Dark backgrounds, red accents, smooth interactions.
+ */
+
+interface Video {
+  id: string;
+  title: string;
+  thumbnail: string;
+  duration: string;
+  rating: string;
+  genre: string;
+}
+
+// Mock video data
+const mockVideos: Video[] = [
+  {
+    id: "1",
+    title: "The Reckoning",
+    thumbnail: "https://d2xsxph8kpxj0f.cloudfront.net/310519663703408665/G8K3phvk9afm3Q6wPPhs7P/video-thumb-1-5VykCxPnsA2hc23sX4NAcx.webp",
+    duration: "2h 8m",
+    rating: "4.5/5",
+    genre: "Thriller",
+  },
+  {
+    id: "2",
+    title: "Echoes Beyond Tomorrow",
+    thumbnail: "https://d2xsxph8kpxj0f.cloudfront.net/310519663703408665/G8K3phvk9afm3Q6wPPhs7P/video-thumb-2-Rm9g5GxsNAYxuGkZdHRXJo.webp",
+    duration: "2h 15m",
+    rating: "4.8/5",
+    genre: "Sci-Fi",
+  },
+  {
+    id: "3",
+    title: "The Disappearance",
+    thumbnail: "https://d2xsxph8kpxj0f.cloudfront.net/310519663703408665/G8K3phvk9afm3Q6wPPhs7P/video-thumb-3-fEWNu4TEdYhAZfPfvjWRtj.webp",
+    duration: "1h 58m",
+    rating: "4.3/5",
+    genre: "Mystery",
+  },
+  {
+    id: "4",
+    title: "The Reckoning",
+    thumbnail: "https://d2xsxph8kpxj0f.cloudfront.net/310519663703408665/G8K3phvk9afm3Q6wPPhs7P/video-thumb-1-5VykCxPnsA2hc23sX4NAcx.webp",
+    duration: "2h 8m",
+    rating: "4.5/5",
+    genre: "Thriller",
+  },
+  {
+    id: "5",
+    title: "Echoes Beyond Tomorrow",
+    thumbnail: "https://d2xsxph8kpxj0f.cloudfront.net/310519663703408665/G8K3phvk9afm3Q6wPPhs7P/video-thumb-2-Rm9g5GxsNAYxuGkZdHRXJo.webp",
+    duration: "2h 15m",
+    rating: "4.8/5",
+    genre: "Sci-Fi",
+  },
+  {
+    id: "6",
+    title: "The Disappearance",
+    thumbnail: "https://d2xsxph8kpxj0f.cloudfront.net/310519663703408665/G8K3phvk9afm3Q6wPPhs7P/video-thumb-3-fEWNu4TEdYhAZfPfvjWRtj.webp",
+    duration: "1h 58m",
+    rating: "4.3/5",
+    genre: "Mystery",
+  },
+];
+
+export default function Home() {
+  const [selectedVideo, setSelectedVideo] = useState<Video | null>(null);
+  const [isPlayerOpen, setIsPlayerOpen] = useState(false);
+
+  const handleVideoClick = (videoId: string) => {
+    const video = mockVideos.find((v) => v.id === videoId);
+    if (video) {
+      setSelectedVideo(video);
+      setIsPlayerOpen(true);
+    }
+  };
+
+  const handlePlayHero = () => {
+    setSelectedVideo({
+      id: "hero",
+      title: "The Reckoning",
+      thumbnail: "https://d2xsxph8kpxj0f.cloudfront.net/310519663703408665/G8K3phvk9afm3Q6wPPhs7P/video-thumb-1-5VykCxPnsA2hc23sX4NAcx.webp",
+      duration: "2h 8m",
+      rating: "4.5/5",
+      genre: "Thriller",
+    });
+    setIsPlayerOpen(true);
+  };
+
+  return (
+    <div className="min-h-screen bg-background">
+      {/* Navigation */}
+      <Navbar />
+
+      {/* Main Content */}
+      <main className="space-y-8 pb-16">
+        {/* Hero Section */}
+        <div className="px-4 sm:px-6 lg:px-8 pt-6">
+          <HeroSection
+            title="The Reckoning"
+            description="Some secrets never stay buried. A gripping psychological thriller that will keep you on the edge of your seat. Dive into a world of mystery, suspense, and unexpected twists."
+            backgroundImage="https://d2xsxph8kpxj0f.cloudfront.net/310519663703408665/G8K3phvk9afm3Q6wPPhs7P/video-thumb-1-5VykCxPnsA2hc23sX4NAcx.webp"
+            rating="4.5/5"
+            genre="Psychological Thriller"
+            onPlay={handlePlayHero}
+            onAddToList={() => alert("Added to your list!")}
+            onMoreInfo={() => alert("More info coming soon!")}
+          />
+        </div>
+
+        {/* Video Carousels */}
+        <div className="space-y-12">
+          <VideoCarousel
+            title="Trending Now"
+            videos={mockVideos}
+            onVideoClick={handleVideoClick}
+          />
+
+          <VideoCarousel
+            title="Continue Watching"
+            videos={mockVideos.slice(0, 4)}
+            onVideoClick={handleVideoClick}
+          />
+
+          <VideoCarousel
+            title="Recommended For You"
+            videos={mockVideos}
+            onVideoClick={handleVideoClick}
+          />
+
+          <VideoCarousel
+            title="New Releases"
+            videos={mockVideos.slice(0, 5)}
+            onVideoClick={handleVideoClick}
+          />
+        </div>
+      </main>
+
+      {/* Video Player Modal */}
+      <Dialog open={isPlayerOpen} onOpenChange={setIsPlayerOpen}>
+        <DialogContent className="max-w-4xl bg-black border-border p-0 gap-0">
+          <DialogHeader className="sr-only">
+            <DialogTitle>{selectedVideo?.title}</DialogTitle>
+          </DialogHeader>
+          {selectedVideo && (
+            <div className="w-full">
+              <VideoPlayer
+                title={selectedVideo.title}
+                poster={selectedVideo.thumbnail}
+                onClose={() => setIsPlayerOpen(false)}
+              />
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
