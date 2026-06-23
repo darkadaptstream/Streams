@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>DarkStream Playlist</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #080808; --surface: #111111; --surface2: #1a1a1a;
+            --accent: #E63946; --text: #f0f0f0; --muted: #666; --border: #1f1f1f;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; overflow-x: hidden; }
+
+        header {
+            background: rgba(8,8,8,0.95); border-bottom: 1px solid var(--border);
+            padding: 0 16px; height: 54px;
+            display: flex; align-items: center; justify-content: space-between;
+        }
+        .back-btn { display: flex; align-items: center; gap: 6px; color: var(--text); text-decoration: none; font-size: 0.88rem; font-weight: 500; opacity: 0.8; }
+        .back-btn:hover { opacity: 1; }
+        .logo { font-weight: 800; font-size: 1rem; }
+        .logo span { color: var(--accent); }
+
+        .layout { max-width: 1100px; margin: 0 auto; padding: 20px 16px 60px; display: grid; grid-template-columns: 1fr 300px; gap: 20px; }
+
+        /* PLAYER */
+        .player-outer {
+            position: relative; background: #000; border-radius: 14px; overflow: hidden;
+            aspect-ratio: 16/9; box-shadow: 0 10px 50px rgba(0,0,0,0.7);
+        }
+        #vid { width: 100%; height: 100%; object-fit: contain; display: block; cursor: pointer; }
+
+        .loader { position: absolute; inset: 0; display: none; align-items: center; justify-content: center; background: rgba(0,0,0,0.5); }
+        .loader.show { display: flex; }
+        .spinner { width: 44px; height: 44px; border: 3px solid rgba(255,255,255,0.1); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .play-pulse { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%) scale(0.8); width: 60px; height: 60px; background: rgba(0,0,0,0.55); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; pointer-events: none; opacity: 0; transition: opacity 0.25s, transform 0.25s; }
+        .play-pulse.show { opacity: 1; transform: translate(-50%,-50%) scale(1); }
+
+        .controls { position: absolute; bottom: 0; left: 0; right: 0; padding: 0 14px 14px; background: linear-gradient(transparent, rgba(0,0,0,0.9)); transition: opacity 0.3s; }
+        .controls.hidden { opacity: 0; pointer-events: none; }
+
+        .progress-area { padding: 10px 0 6px; cursor: pointer; }
+        .progress-track { height: 3px; background: rgba(255,255,255,0.15); border-radius: 3px; position: relative; transition: height 0.15s; }
+        .progress-area:hover .progress-track { height: 5px; }
+        .progress-fill { height: 100%; width: 0%; background: var(--accent); border-radius: 3px; }
+        .progress-buffer { position: absolute; top: 0; left: 0; height: 100%; background: rgba(255,255,255,0.12); border-radius: 3px; pointer-events: none; }
+
+        .ctrl-row { display: flex; align-items: center; gap: 6px; }
+        .c-btn { background: none; border: none; color: rgba(255,255,255,0.9); cursor: pointer; padding: 6px; border-radius: 6px; font-size: 1.1rem; line-height: 1; transition: color 0.15s, background 0.15s; flex-shrink: 0; }
+        .c-btn:hover { color: #fff; background: rgba(255,255,255,0.1); }
+        .time-txt { font-size: 0.75rem; color: rgba(255,255,255,0.75); flex: 1; white-space: nowrap; padding: 0 4px; font-variant-numeric: tabular-nums; }
+        .vol-wrap { display: flex; align-items: center; gap: 6px; }
+        .vol-range { -webkit-appearance: none; width: 60px; height: 3px; background: rgba(255,255,255,0.25); border-radius: 2px; outline: none; }
+        .vol-range::-webkit-slider-thumb { -webkit-appearance: none; width: 12px; height: 12px; background: #fff; border-radius: 50%; }
+        .speed-wrap { position: relative; }
+        .speed-label { background: rgba(255,255,255,0.12); border: none; color: #fff; font-size: 0.72rem; font-weight: 600; font-family: 'Inter', sans-serif; padding: 4px 8px; border-radius: 5px; cursor: pointer; }
+        .speed-menu { position: absolute; bottom: 36px; right: 0; background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 10px; padding: 6px 0; min-width: 110px; display: none; box-shadow: 0 8px 30px rgba(0,0,0,0.6); z-index: 10; }
+        .speed-menu.open { display: block; }
+        .speed-opt { padding: 9px 16px; cursor: pointer; font-size: 0.85rem; transition: background 0.15s; color: #ccc; }
+        .speed-opt:hover { background: #252525; color: #fff; }
+        .speed-opt.on { color: var(--accent); font-weight: 600; }
+        .player-outer:fullscreen, .player-outer:-webkit-full-screen { border-radius: 0; width: 100vw; height: 100vh; aspect-ratio: unset; }
+
+        /* NOW PLAYING */
+        .now-playing-info { margin-top: 14px; }
+        .np-title { font-size: 1rem; font-weight: 700; margin-bottom: 4px; }
+        .np-sub { font-size: 0.8rem; color: var(--muted); }
+
+        /* PLAYLIST SIDEBAR */
+        .sidebar { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; height: fit-content; max-height: calc(100vh - 100px); display: flex; flex-direction: column; }
+        .sidebar-hd { padding: 14px 16px; border-bottom: 1px solid var(--border); }
+        .sidebar-title { font-size: 0.9rem; font-weight: 700; margin-bottom: 2px; }
+        .sidebar-sub { font-size: 0.75rem; color: var(--muted); }
+        .ep-list { overflow-y: auto; flex: 1; }
+        .ep-list::-webkit-scrollbar { width: 3px; }
+        .ep-list::-webkit-scrollbar-thumb { background: #2a2a2a; border-radius: 2px; }
+
+        .ep-item { display: flex; align-items: center; gap: 12px; padding: 12px 16px; cursor: pointer; transition: background 0.15s; border-bottom: 1px solid var(--border); }
+        .ep-item:hover { background: var(--surface2); }
+        .ep-item.active { background: rgba(230,57,70,0.1); border-left: 3px solid var(--accent); padding-left: 13px; }
+        .ep-num { font-size: 0.75rem; color: var(--muted); min-width: 22px; text-align: center; }
+        .ep-item.active .ep-num { color: var(--accent); }
+        .ep-playing { font-size: 0.7rem; }
+        .ep-info { flex: 1; min-width: 0; }
+        .ep-name { font-size: 0.85rem; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .ep-item.active .ep-name { color: var(--text); }
+        .ep-dur { font-size: 0.72rem; color: var(--muted); margin-top: 2px; }
+
+        @media(max-width: 680px) {
+            .layout { grid-template-columns: 1fr; }
+            .sidebar { max-height: 300px; }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <a href="dashboard.html" class="back-btn">← Library</a>
+        <div class="logo">Dark<span>Stream</span></div>
+        <div style="width:60px"></div>
+    </header>
+
+    <div class="layout">
+        <div>
+            <div class="player-outer" id="playerOuter">
+                <video id="vid" preload="metadata"></video>
+                <div class="loader" id="loader"><div class="spinner"></div></div>
+                <div class="play-pulse" id="playPulse"></div>
+                <div class="controls" id="controls">
+                    <div class="progress-area" id="progressArea">
+                        <div class="progress-track">
+                            <div class="progress-buffer" id="bufferFill"></div>
+                            <div class="progress-fill" id="progressFill"></div>
+                        </div>
+                    </div>
+                    <div class="ctrl-row">
+                        <button class="c-btn" id="playBtn" onclick="togglePlay()">▶</button>
+                        <button class="c-btn" onclick="seek(-10)">⏪</button>
+                        <button class="c-btn" onclick="seek(10)">⏩</button>
+                        <span class="time-txt" id="timeTxt">0:00 / 0:00</span>
+                        <div class="vol-wrap">
+                            <button class="c-btn" onclick="toggleMute()" id="muteBtn">🔊</button>
+                            <input type="range" class="vol-range" id="volRange" min="0" max="1" step="0.05" value="1" oninput="setVol(this.value)">
+                        </div>
+                        <div class="speed-wrap">
+                            <button class="speed-label" onclick="toggleSpeedMenu()" id="speedBtn">1×</button>
+                            <div class="speed-menu" id="speedMenu">
+                                <div class="speed-opt" onclick="setSpeed(0.5)">0.5× Slow</div>
+                                <div class="speed-opt" onclick="setSpeed(0.75)">0.75×</div>
+                                <div class="speed-opt on" onclick="setSpeed(1)">1× Normal</div>
+                                <div class="speed-opt" onclick="setSpeed(1.25)">1.25×</div>
+                                <div class="speed-opt" onclick="setSpeed(1.5)">1.5×</div>
+                                <div class="speed-opt" onclick="setSpeed(2)">2× Fastest</div>
+                            </div>
+                        </div>
+                        <button class="c-btn" onclick="toggleFS()">⛶</button>
+                    </div>
+                </div>
+            </div>
+            <div class="now-playing-info">
+                <div class="np-title" id="npTitle">Loading...</div>
+                <div class="np-sub" id="npSub"></div>
+            </div>
+        </div>
+
+        <div class="sidebar">
+            <div class="sidebar-hd">
+                <div class="sidebar-title" id="plTitle">Playlist</div>
+                <div class="sidebar-sub" id="plSub"></div>
+            </div>
+            <div class="ep-list" id="epList"></div>
+        </div>
+    </div>
+
+    <script>
+        const vid = document.getElementById('vid');
+        const playBtn = document.getElementById('playBtn');
+        const progressFill = document.getElementById('progressFill');
+        const bufferFill = document.getElementById('bufferFill');
+        const timeTxt = document.getElementById('timeTxt');
+        const controls = document.getElementById('controls');
+        const loader = document.getElementById('loader');
+        const playPulse = document.getElementById('playPulse');
+        const outer = document.getElementById('playerOuter');
+        let videos = [], current = 0, hideTimer;
+
+        async function load() {
+            const p = new URLSearchParams(location.search);
+            const key = p.get('key');
+            if (!key) { location.href = 'dashboard.html'; return; }
+            try {
+                const res = await fetch('keys.json?v=' + Date.now());
+                const keys = await res.json();
+                const data = keys[key];
+                if (!data || data.type !== 'folder') { location.href = 'dashboard.html'; return; }
+                videos = data.videos;
+                document.title = data.title + ' · DarkStream';
+                document.getElementById('plTitle').textContent = data.title;
+                document.getElementById('plSub').textContent = videos.length + ' episodes';
+                renderList();
+                playEp(0);
+            } catch(e) { alert('Error loading playlist.'); location.href = 'dashboard.html'; }
+        }
+
+        function renderList() {
+            document.getElementById('epList').innerHTML = videos.map((v, i) => `
+                <div class="ep-item ${i===0?'active':''}" id="ep-${i}" onclick="playEp(${i})">
+                    <div class="ep-num" id="epn-${i}">${i+1}</div>
+                    <div class="ep-info">
+                        <div class="ep-name">${v.title}</div>
+                        ${v.duration ? `<div class="ep-dur">⏱ ${v.duration}</div>` : ''}
+                    </div>
+                </div>`).join('');
+        }
+
+        function playEp(i) {
+            current = i;
+            const v = videos[i];
+            vid.src = v.url;
+            vid.play().catch(()=>{});
+            document.getElementById('npTitle').textContent = v.title;
+            document.getElementById('npSub').textContent = `Episode ${i+1} of ${videos.length}`;
+            document.querySelectorAll('.ep-item').forEach((el,j) => {
+                el.classList.toggle('active', j===i);
+                document.getElementById('epn-'+j).textContent = j===i ? '▶' : j+1;
+            });
+            document.getElementById('ep-'+i).scrollIntoView({ behavior:'smooth', block:'nearest' });
+        }
+
+        function togglePlay() { vid.paused ? vid.play() : vid.pause(); }
+        function seek(s) { vid.currentTime = Math.max(0, Math.min(vid.duration||0, vid.currentTime+s)); }
+        function setVol(v) { vid.volume=v; vid.muted=v==0; updateMute(); }
+        function toggleMute() { vid.muted=!vid.muted; document.getElementById('volRange').value=vid.muted?0:vid.volume; updateMute(); }
+        function updateMute() { document.getElementById('muteBtn').textContent=(vid.muted||vid.volume==0)?'🔇':'🔊'; }
+        function toggleSpeedMenu() { document.getElementById('speedMenu').classList.toggle('open'); }
+        function setSpeed(s) { vid.playbackRate=s; document.getElementById('speedBtn').textContent=s+'×'; document.querySelectorAll('.speed-opt').forEach(o=>o.classList.toggle('on',parseFloat(o.textContent)===s)); document.getElementById('speedMenu').classList.remove('open'); }
+        function toggleFS() {
+            if (!document.fullscreenElement&&!document.webkitFullscreenElement) { (outer.requestFullscreen||outer.webkitRequestFullscreen).call(outer); if(screen.orientation?.lock) screen.orientation.lock('landscape').catch(()=>{}); }
+            else { (document.exitFullscreen||document.webkitExitFullscreen).call(document); if(screen.orientation?.unlock) screen.orientation.unlock(); }
+        }
+        function fmt(s) { if(isNaN(s))return'0:00'; const m=Math.floor(s/60),sec=Math.floor(s%60).toString().padStart(2,'0'); return m+':'+sec; }
+        function showControls() { controls.classList.remove('hidden'); clearTimeout(hideTimer); if(!vid.paused) hideTimer=setTimeout(()=>controls.classList.add('hidden'),3000); }
+
+        function pulse(icon) { playPulse.textContent=icon; playPulse.classList.add('show'); clearTimeout(pulse._t); pulse._t=setTimeout(()=>playPulse.classList.remove('show'),500); }
+
+        vid.addEventListener('play',()=>{ playBtn.textContent='⏸'; showControls(); });
+        vid.addEventListener('pause',()=>{ playBtn.textContent='▶'; controls.classList.remove('hidden'); clearTimeout(hideTimer); pulse('⏸'); });
+        vid.addEventListener('playing',()=>{ loader.classList.remove('show'); pulse('▶'); });
+        vid.addEventListener('waiting',()=>loader.classList.add('show'));
+        vid.addEventListener('canplay',()=>loader.classList.remove('show'));
+        vid.addEventListener('ended',()=>{ if(current<videos.length-1) playEp(current+1); });
+        vid.addEventListener('timeupdate',()=>{ if(!vid.duration)return; progressFill.style.width=(vid.currentTime/vid.duration*100)+'%'; timeTxt.textContent=fmt(vid.currentTime)+' / '+fmt(vid.duration); });
+        vid.addEventListener('progress',()=>{ if(vid.buffered.length&&vid.duration) bufferFill.style.width=(vid.buffered.end(vid.buffered.length-1)/vid.duration*100)+'%'; });
+
+        document.getElementById('progressArea').addEventListener('click',function(e){ const r=this.getBoundingClientRect(); vid.currentTime=((e.clientX-r.left)/r.width)*vid.duration; });
+        outer.addEventListener('click',e=>{ if(e.target.closest('.controls'))return; togglePlay(); });
+        outer.addEventListener('mousemove',showControls);
+        outer.addEventListener('touchstart',showControls,{passive:true});
+        document.addEventListener('click',e=>{ if(!e.target.closest('.speed-wrap')) document.getElementById('speedMenu').classList.remove('open'); });
+
+        load(); showControls();
+    </script>
+</body>
+</html>

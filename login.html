@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DarkStream · Login</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="config.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        :root { --bg:#080808;--surface:#121212;--surface2:#1a1a1a;--accent:#E63946;--accent2:#c1121f;--text:#f0f0f0;--muted:#666;--border:#1f1f1f; }
+        *{margin:0;padding:0;box-sizing:border-box;}
+        body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;min-height:100vh;display:flex;flex-direction:column;}
+        body::before{content:'';position:fixed;top:-200px;left:50%;transform:translateX(-50%);width:600px;height:400px;background:radial-gradient(ellipse,rgba(230,57,70,0.1) 0%,transparent 70%);pointer-events:none;z-index:0;}
+        .page{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 20px;position:relative;z-index:1;}
+        .brand{display:flex;align-items:center;gap:10px;margin-bottom:8px;}
+        .brand-icon{width:42px;height:42px;background:var(--accent);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.2rem;}
+        .brand-name{font-size:1.8rem;font-weight:800;letter-spacing:-0.5px;}
+        .brand-name span{color:var(--accent);}
+        .tagline{color:var(--muted);font-size:0.85rem;margin-bottom:40px;letter-spacing:0.5px;}
+        .card{background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:32px 28px;width:100%;max-width:400px;}
+
+        /* TABS */
+        .tabs{display:grid;grid-template-columns:1fr 1fr;background:var(--surface2);border-radius:10px;padding:4px;margin-bottom:28px;}
+        .tab{padding:10px;text-align:center;border-radius:7px;cursor:pointer;font-size:0.88rem;font-weight:600;color:var(--muted);transition:all 0.2s;}
+        .tab.active{background:var(--accent);color:#fff;}
+
+        /* FORM */
+        .form{display:none;}
+        .form.active{display:block;}
+        .field{margin-bottom:14px;}
+        .field label{display:block;font-size:0.78rem;font-weight:600;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.5px;}
+        .input-wrap{position:relative;}
+        .input-icon{position:absolute;left:13px;top:50%;transform:translateY(-50%);font-size:0.9rem;color:var(--muted);}
+        input[type="email"],input[type="password"],input[type="text"]{width:100%;padding:13px 13px 13px 38px;background:var(--surface2);border:1.5px solid var(--border);border-radius:9px;color:var(--text);font-size:0.92rem;font-family:'Inter',sans-serif;outline:none;transition:border-color 0.2s;}
+        input:focus{border-color:var(--accent);}
+        input::placeholder{color:#444;}
+
+        .btn{width:100%;padding:14px;background:var(--accent);color:#fff;border:none;border-radius:9px;font-size:0.95rem;font-weight:700;font-family:'Inter',sans-serif;cursor:pointer;transition:background 0.2s,transform 0.1s;display:flex;align-items:center;justify-content:center;gap:8px;margin-top:6px;}
+        .btn:hover{background:var(--accent2);}
+        .btn:active{transform:scale(0.98);}
+        .btn:disabled{opacity:0.6;pointer-events:none;}
+
+        .msg{margin-top:12px;padding:11px 13px;border-radius:8px;font-size:0.82rem;display:none;}
+        .msg.error{background:rgba(230,57,70,0.1);color:#ff6b6b;border:1px solid rgba(230,57,70,0.2);}
+        .msg.success{background:rgba(34,197,94,0.1);color:#4ade80;border:1px solid rgba(34,197,94,0.2);}
+        .msg.info{background:rgba(99,102,241,0.1);color:#a5b4fc;border:1px solid rgba(99,102,241,0.2);}
+
+        .divider{display:flex;align-items:center;gap:10px;margin:18px 0;color:var(--muted);font-size:0.75rem;}
+        .divider::before,.divider::after{content:'';flex:1;height:1px;background:var(--border);}
+
+        .forgot{text-align:right;margin-top:-8px;margin-bottom:14px;}
+        .forgot a{font-size:0.78rem;color:var(--muted);text-decoration:none;}
+        .forgot a:hover{color:var(--accent);}
+
+        .terms{font-size:0.75rem;color:var(--muted);text-align:center;margin-top:14px;line-height:1.6;}
+        .terms span{color:var(--accent);}
+
+        .footer{text-align:center;color:#333;font-size:0.75rem;padding:20px;position:relative;z-index:1;}
+
+        .spinner{width:16px;height:16px;border:2px solid rgba(255,255,255,0.3);border-top-color:#fff;border-radius:50%;animation:spin 0.7s linear infinite;}
+        @keyframes spin{to{transform:rotate(360deg);}}
+
+        .strength-bar{height:3px;border-radius:2px;margin-top:6px;transition:all 0.3s;width:0%;}
+    </style>
+</head>
+<body>
+    <div class="page">
+        <div class="brand">
+            <div class="brand-icon">▶</div>
+            <div class="brand-name">Dark<span>Stream</span></div>
+        </div>
+        <div class="tagline">PRIVATE · EXCLUSIVE · YOURS</div>
+
+        <div class="card">
+            <div class="tabs">
+                <div class="tab active" onclick="switchTab('login')">Sign In</div>
+                <div class="tab" onclick="switchTab('register')">Register</div>
+            </div>
+
+            <!-- LOGIN FORM -->
+            <div class="form active" id="loginForm">
+                <div class="field">
+                    <label>Email</label>
+                    <div class="input-wrap">
+                        <span class="input-icon">✉️</span>
+                        <input type="email" id="loginEmail" placeholder="your@email.com" autocomplete="email">
+                    </div>
+                </div>
+                <div class="field">
+                    <label>Password</label>
+                    <div class="input-wrap">
+                        <span class="input-icon">🔒</span>
+                        <input type="password" id="loginPass" placeholder="Enter password" autocomplete="current-password">
+                    </div>
+                </div>
+                <div class="forgot"><a href="#" onclick="forgotPassword()">Forgot password?</a></div>
+                <button class="btn" id="loginBtn" onclick="login()">
+                    <span id="loginBtnTxt">Sign In</span>
+                </button>
+                <div class="msg" id="loginMsg"></div>
+            </div>
+
+            <!-- REGISTER FORM -->
+            <div class="form" id="registerForm">
+                <div class="field">
+                    <label>Username</label>
+                    <div class="input-wrap">
+                        <span class="input-icon">👤</span>
+                        <input type="text" id="regName" placeholder="Choose a username" autocomplete="username">
+                    </div>
+                </div>
+                <div class="field">
+                    <label>Email</label>
+                    <div class="input-wrap">
+                        <span class="input-icon">✉️</span>
+                        <input type="email" id="regEmail" placeholder="your@email.com" autocomplete="email">
+                    </div>
+                </div>
+                <div class="field">
+                    <label>Password</label>
+                    <div class="input-wrap">
+                        <span class="input-icon">🔒</span>
+                        <input type="password" id="regPass" placeholder="Min 6 characters" autocomplete="new-password" oninput="checkStrength(this.value)">
+                    </div>
+                    <div class="strength-bar" id="strengthBar"></div>
+                </div>
+                <button class="btn" id="regBtn" onclick="register()">
+                    <span id="regBtnTxt">Create Account</span>
+                </button>
+                <div class="msg" id="regMsg"></div>
+                <div class="terms">By registering you agree to our <span>Terms of Service</span></div>
+            </div>
+        </div>
+    </div>
+    <div class="footer">© 2026 DarkStream · All rights reserved</div>
+
+    <script>
+        // Init Supabase
+        const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        // Check already logged in
+        sb.auth.getSession().then(({ data }) => {
+            if (data.session) window.location.href = 'dashboard.html';
+        });
+
+        function switchTab(tab) {
+            document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', (i===0&&tab==='login')||(i===1&&tab==='register')));
+            document.getElementById('loginForm').classList.toggle('active', tab==='login');
+            document.getElementById('registerForm').classList.toggle('active', tab==='register');
+        }
+
+        function showMsg(id, text, type) {
+            const el = document.getElementById(id);
+            el.textContent = text;
+            el.className = 'msg ' + type;
+            el.style.display = 'block';
+        }
+
+        function setLoading(btnId, txtId, loading, defaultTxt) {
+            const btn = document.getElementById(btnId);
+            btn.disabled = loading;
+            document.getElementById(txtId).innerHTML = loading ? '' : defaultTxt;
+            if (loading) btn.innerHTML = '<div class="spinner"></div>';
+            else btn.innerHTML = `<span id="${txtId}">${defaultTxt}</span>`;
+        }
+
+        async function login() {
+            const email = document.getElementById('loginEmail').value.trim();
+            const pass = document.getElementById('loginPass').value;
+            if (!email || !pass) { showMsg('loginMsg','Please fill all fields.','error'); return; }
+            setLoading('loginBtn','loginBtnTxt',true,'Sign In');
+            const { error } = await sb.auth.signInWithPassword({ email, password: pass });
+            if (error) {
+                showMsg('loginMsg', error.message === 'Invalid login credentials' ? '❌ Wrong email or password.' : '❌ ' + error.message, 'error');
+                setLoading('loginBtn','loginBtnTxt',false,'Sign In');
+            } else {
+                showMsg('loginMsg','✅ Welcome back! Redirecting...','success');
+                setTimeout(() => window.location.href = 'dashboard.html', 800);
+            }
+        }
+
+        async function register() {
+            const name = document.getElementById('regName').value.trim();
+            const email = document.getElementById('regEmail').value.trim();
+            const pass = document.getElementById('regPass').value;
+            if (!name || !email || !pass) { showMsg('regMsg','Please fill all fields.','error'); return; }
+            if (pass.length < 6) { showMsg('regMsg','Password must be at least 6 characters.','error'); return; }
+            setLoading('regBtn','regBtnTxt',true,'Create Account');
+            const { error } = await sb.auth.signUp({ email, password: pass, options: { data: { username: name } } });
+            if (error) {
+                showMsg('regMsg', '❌ ' + error.message, 'error');
+                setLoading('regBtn','regBtnTxt',false,'Create Account');
+            } else {
+                showMsg('regMsg','✅ Account created! Check email to verify, then sign in.','success');
+                setLoading('regBtn','regBtnTxt',false,'Create Account');
+                setTimeout(() => switchTab('login'), 2000);
+            }
+        }
+
+        async function forgotPassword() {
+            const email = document.getElementById('loginEmail').value.trim();
+            if (!email) { showMsg('loginMsg','Enter your email first.','info'); return; }
+            const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo: window.location.origin + '/login.html' });
+            if (error) showMsg('loginMsg','❌ ' + error.message,'error');
+            else showMsg('loginMsg','📧 Reset link sent to your email!','success');
+        }
+
+        function checkStrength(pass) {
+            const bar = document.getElementById('strengthBar');
+            if (!pass) { bar.style.width='0%'; return; }
+            let score = 0;
+            if (pass.length >= 6) score++;
+            if (pass.length >= 10) score++;
+            if (/[A-Z]/.test(pass)) score++;
+            if (/[0-9]/.test(pass)) score++;
+            if (/[^A-Za-z0-9]/.test(pass)) score++;
+            const colors = ['#ef4444','#f97316','#eab308','#22c55e','#16a34a'];
+            bar.style.width = (score * 20) + '%';
+            bar.style.background = colors[score-1] || '#ef4444';
+        }
+
+        // Enter key support
+        document.addEventListener('keypress', e => {
+            if (e.key !== 'Enter') return;
+            if (document.getElementById('loginForm').classList.contains('active')) login();
+            else register();
+        });
+    </script>
+</body>
+</html>
