@@ -1,0 +1,16 @@
+{
+  "DARK1234": {
+    "type": "video",
+    "title": "My First Video",
+    "url": "PASTE_YOUR_VIDEO_DIRECT_URL_HERE.mp4"
+  },
+  "PLAY5678": {
+    "type": "folder",
+    "title": "My Playlist",
+    "videos": [
+      { "title": "Episode 1", "url": "PASTE_VIDEO_1_URL_HERE.mp4" },
+      { "title": "Episode 2", "url": "PASTE_VIDEO_2_URL_HERE.mp4" },
+      { "title": "Episode 3", "url": "PASTE_VIDEO_3_URL_HERE.mp4" }
+    ]
+  }
+}
