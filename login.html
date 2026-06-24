@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DarkStream · Login</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@supabase/supabase-js@2.39.0/dist/umd/supabase.js"></script>
+    <script src="config.js"></script>
+    <style>
+        :root{--bg:#080808;--surface:#121212;--surface2:#1a1a1a;--accent:#E63946;--accent2:#c1121f;--text:#f0f0f0;--muted:#666;--border:#1f1f1f;}
+        *{margin:0;padding:0;box-sizing:border-box;}
+        body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;min-height:100vh;display:flex;flex-direction:column;}
+        body::before{content:'';position:fixed;top:-200px;left:50%;transform:translateX(-50%);width:600px;height:400px;background:radial-gradient(ellipse,rgba(230,57,70,0.1) 0%,transparent 70%);pointer-events:none;z-index:0;}
+        .page{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 20px;position:relative;z-index:1;}
+        .brand{display:flex;align-items:center;gap:10px;margin-bottom:8px;}
+        .brand-icon{width:42px;height:42px;background:var(--accent);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.2rem;}
+        .brand-name{font-size:1.8rem;font-weight:800;letter-spacing:-0.5px;}
+        .brand-name span{color:var(--accent);}
+        .tagline{color:var(--muted);font-size:0.85rem;margin-bottom:40px;letter-spacing:0.5px;}
+        .card{background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:32px 28px;width:100%;max-width:400px;}
+        .tabs{display:grid;grid-template-columns:1fr 1fr;background:var(--surface2);border-radius:10px;padding:4px;margin-bottom:28px;}
+        .tab{padding:10px;text-align:center;border-radius:7px;cursor:pointer;font-size:0.88rem;font-weight:600;color:var(--muted);transition:all 0.2s;}
+        .tab.active{background:var(--accent);color:#fff;}
+        .form{display:none;}
+        .form.active{display:block;}
+        .field{margin-bottom:14px;}
+        .field label{display:block;font-size:0.78rem;font-weight:600;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.5px;}
+        .input-wrap{position:relative;}
+        .input-icon{position:absolute;left:13px;top:50%;transform:translateY(-50%);font-size:0.9rem;color:var(--muted);}
+        input{width:100%;padding:13px 13px 13px 38px;background:var(--surface2);border:1.5px solid var(--border);border-radius:9px;color:var(--text);font-size:0.92rem;font-family:'Inter',sans-serif;outline:none;transition:border-color 0.2s;}
+        input:focus{border-color:var(--accent);}
+        input::placeholder{color:#444;}
+        .btn{width:100%;padding:14px;background:var(--accent);color:#fff;border:none;border-radius:9px;font-size:0.95rem;font-weight:700;font-family:'Inter',sans-serif;cursor:pointer;transition:background 0.2s;display:flex;align-items:center;justify-content:center;gap:8px;margin-top:6px;}
+        .btn:hover{background:var(--accent2);}
+        .btn:disabled{opacity:0.6;pointer-events:none;}
+        .msg{margin-top:12px;padding:11px 13px;border-radius:8px;font-size:0.82rem;display:none;}
+        .msg.error{background:rgba(230,57,70,0.1);color:#ff6b6b;border:1px solid rgba(230,57,70,0.2);}
+        .msg.success{background:rgba(34,197,94,0.1);color:#4ade80;border:1px solid rgba(34,197,94,0.2);}
+        .terms{font-size:0.75rem;color:var(--muted);text-align:center;margin-top:14px;}
+        .footer{text-align:center;color:#333;font-size:0.75rem;padding:20px;position:relative;z-index:1;}
+        .spinner{width:16px;height:16px;border:2px solid rgba(255,255,255,0.3);border-top-color:#fff;border-radius:50%;animation:spin 0.7s linear infinite;}
+        @keyframes spin{to{transform:rotate(360deg);}}
+        .strength-bar{height:3px;border-radius:2px;margin-top:6px;transition:all 0.3s;width:0%;}
+    </style>
+</head>
+<body>
+    <div class="page">
+        <div class="brand">
+            <div class="brand-icon">▶</div>
+            <div class="brand-name">Dark<span>Stream</span></div>
+        </div>
+        <div class="tagline">PRIVATE · EXCLUSIVE · YOURS</div>
+        <div class="card">
+            <div class="tabs">
+                <div class="tab active" onclick="switchTab('login')">Sign In</div>
+                <div class="tab" onclick="switchTab('register')">Register</div>
+            </div>
+            <!-- LOGIN -->
+            <div class="form active" id="loginForm">
+                <div class="field">
+                    <label>Username</label>
+                    <div class="input-wrap">
+                        <span class="input-icon">👤</span>
+                        <input type="text" id="loginUser" placeholder="Your username">
+                    </div>
+                </div>
+                <div class="field">
+                    <label>Password</label>
+                    <div class="input-wrap">
+                        <span class="input-icon">🔒</span>
+                        <input type="password" id="loginPass" placeholder="Your password">
+                    </div>
+                </div>
+                <button class="btn" id="loginBtn" onclick="login()">Sign In</button>
+                <div class="msg" id="loginMsg"></div>
+            </div>
+            <!-- REGISTER -->
+            <div class="form" id="registerForm">
+                <div class="field">
+                    <label>Username</label>
+                    <div class="input-wrap">
+                        <span class="input-icon">👤</span>
+                        <input type="text" id="regUser" placeholder="Choose a username">
+                    </div>
+                </div>
+                <div class="field">
+                    <label>Password</label>
+                    <div class="input-wrap">
+                        <span class="input-icon">🔒</span>
+                        <input type="password" id="regPass" placeholder="Min 6 characters" oninput="checkStrength(this.value)">
+                    </div>
+                    <div class="strength-bar" id="strengthBar"></div>
+                </div>
+                <button class="btn" id="regBtn" onclick="register()">Create Account</button>
+                <div class="msg" id="regMsg"></div>
+                <div class="terms">No email needed! Just username + password 🎉</div>
+            </div>
+        </div>
+    </div>
+    <div class="footer">© 2026 DarkStream</div>
+
+    <script>
+        // Init Supabase (for database only, not auth)
+        const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        // Check already logged in
+        const session = JSON.parse(localStorage.getItem('ds_session') || 'null');
+        if (session) window.location.href = 'dashboard.html';
+
+        function switchTab(tab) {
+            document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active',(i===0&&tab==='login')||(i===1&&tab==='register')));
+            document.getElementById('loginForm').classList.toggle('active', tab==='login');
+            document.getElementById('registerForm').classList.toggle('active', tab==='register');
+        }
+
+        function showMsg(id, text, type) {
+            const el = document.getElementById(id);
+            el.textContent = text;
+            el.className = 'msg ' + type;
+            el.style.display = 'block';
+        }
+
+        function setBtn(id, loading, txt) {
+            const btn = document.getElementById(id);
+            btn.disabled = loading;
+            btn.innerHTML = loading ? '<div class="spinner"></div>' : txt;
+        }
+
+        // Simple hash function for password
+        async function hashPass(pass) {
+            const enc = new TextEncoder().encode(pass + 'darkstream_salt_2026');
+            const buf = await crypto.subtle.digest('SHA-256', enc);
+            return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+        }
+
+        async function login() {
+            const username = document.getElementById('loginUser').value.trim().toLowerCase();
+            const pass = document.getElementById('loginPass').value;
+            if (!username || !pass) { showMsg('loginMsg','Please fill all fields.','error'); return; }
+            setBtn('loginBtn', true, 'Sign In');
+            try {
+                const hashed = await hashPass(pass);
+                const { data, error } = await sb.from('users').select('*').eq('username', username).eq('password', hashed).single();
+                if (error || !data) {
+                    showMsg('loginMsg','❌ Wrong username or password.','error');
+                } else {
+                    localStorage.setItem('ds_session', JSON.stringify({ id: data.id, username: data.username }));
+                    showMsg('loginMsg','✅ Welcome back! Redirecting...','success');
+                    setTimeout(() => window.location.href = 'dashboard.html', 800);
+                }
+            } catch(e) {
+                showMsg('loginMsg','❌ Error: ' + e.message,'error');
+            }
+            setBtn('loginBtn', false, 'Sign In');
+        }
+
+        async function register() {
+            const username = document.getElementById('regUser').value.trim().toLowerCase();
+            const pass = document.getElementById('regPass').value;
+            if (!username || !pass) { showMsg('regMsg','Please fill all fields.','error'); return; }
+            if (pass.length < 6) { showMsg('regMsg','Password must be at least 6 characters.','error'); return; }
+            if (username.length < 3) { showMsg('regMsg','Username must be at least 3 characters.','error'); return; }
+            setBtn('regBtn', true, 'Create Account');
+            try {
+                const hashed = await hashPass(pass);
+                const { data, error } = await sb.from('users').insert({ username, password: hashed }).select().single();
+                if (error) {
+                    if (error.code === '23505') showMsg('regMsg','❌ Username already taken!','error');
+                    else showMsg('regMsg','❌ ' + error.message,'error');
+                } else {
+                    localStorage.setItem('ds_session', JSON.stringify({ id: data.id, username: data.username }));
+                    showMsg('regMsg','✅ Account created! Redirecting...','success');
+                    setTimeout(() => window.location.href = 'dashboard.html', 800);
+                }
+            } catch(e) {
+                showMsg('regMsg','❌ Error: ' + e.message,'error');
+            }
+            setBtn('regBtn', false, 'Create Account');
+        }
+
+        function checkStrength(pass) {
+            const bar = document.getElementById('strengthBar');
+            if (!pass) { bar.style.width='0%'; return; }
+            let s=0;
+            if(pass.length>=6)s++;if(pass.length>=10)s++;
+            if(/[A-Z]/.test(pass))s++;if(/[0-9]/.test(pass))s++;if(/[^A-Za-z0-9]/.test(pass))s++;
+            const c=['#ef4444','#f97316','#eab308','#22c55e','#16a34a'];
+            bar.style.width=(s*20)+'%'; bar.style.background=c[s-1]||'#ef4444';
+        }
+
+        document.addEventListener('keypress', e => {
+            if(e.key!=='Enter')return;
+            if(document.getElementById('loginForm').classList.contains('active'))login();
+            else register();
+        });
+    </script>
+</body>
+</html>
